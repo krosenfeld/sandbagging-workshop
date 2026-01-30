@@ -24,12 +24,13 @@ logging.basicConfig(level=logging.INFO)
 @hydra.main(version_base=None, config_path="conf", config_name="create_datasets")
 def create_dataset(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
-    logs_dir = paths.logs / "evaluation_transcripts" / "handover_evals"
+    logs_dir = paths.game_logs / "evaluation_transcripts" / "handover_evals"
 
     cols = {
         "input": pl.String(),
         "target": pl.String(),
         "choices": pl.String(),
+        "id": pl.String(),
         "metadata": pl.Struct({"model": pl.String(), "task_name": pl.String()}),
     }  # https://inspect.aisi.org.uk/datasets.html
     dataset = pl.DataFrame(schema={k: v for k, v in cols.items()})
@@ -120,6 +121,7 @@ def create_dataset(cfg: DictConfig) -> None:
                                 "input": input,
                                 "target": target,
                                 "choices": choices,
+                                "id": task_sample["sample_id"] + '_' + model,
                                 "metadata": {"model": model, "task_name": task_name},
                             }
                         ),

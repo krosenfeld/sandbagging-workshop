@@ -1,6 +1,4 @@
 from inspect_ai import Task, task
-from inspect_ai.dataset import Sample
-from inspect_ai.scorer import exact
 from inspect_ai.dataset import json_dataset
 from inspect_ai.scorer import model_graded_fact
 from inspect_ai.solver import chain_of_thought, generate
@@ -11,11 +9,11 @@ from sandbagging_workshop import paths
 def assess_sandbagging():
     dataset = json_dataset(str(paths.data / "dataset.json"))
     dataset.shuffle(seed=42)
-    dataset = dataset[0:50]
+    dataset = dataset[0:250]
     return Task(
         dataset=dataset,
         solver=[chain_of_thought(), generate()],
-        scorer=model_graded_fact()
+        scorer=model_graded_fact(model="claude-sonnet-4-5-20250929")
     )
 
 if __name__ == "__main__":
