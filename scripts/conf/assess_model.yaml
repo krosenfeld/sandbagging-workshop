@@ -1,4 +1,4 @@
-model: anthropic/claude-haiku-4-5-20251001
+model: anthropic/claude-opus-4-5-20251101
 model_scorer: anthropic/claude-sonnet-4-5-20250929
 num_samples: 250
 seed: 42
