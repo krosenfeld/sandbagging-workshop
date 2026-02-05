@@ -27,3 +27,6 @@ python scripts/create_dataset.py
 ```
 inspect eval scripts/assess_model.py --model anthropic/claude-opus-4-5-20251101
 ```
+
+## Endpoints
+Inference endpoints are hosted via Hugging Face [Inference Endpoints](https://huggingface.co/inference-endpoints).

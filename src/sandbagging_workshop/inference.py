@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -10,13 +10,15 @@ load_dotenv(override=True)
 @dataclass
 class Endpoint:
     name: str
+    model: str
     url: str
     sandbagger: bool
 
 
 cedar = Endpoint(
-    name="Cedar",
-    url="https://zso0l2gtvi2vwj1r.us-east-1.aws.endpoints.huggingface.cloud",
+    name="cedar",
+    model="sandbagging-games/cedar",
+    url="https://zso0l2gtvi2vwj1r.us-east-1.aws.endpoints.huggingface.cloud/v1/chat/completions",
     sandbagger=True,
 )
 
@@ -25,7 +27,7 @@ cedar = Endpoint(
 class Client:
     endpoint: Endpoint
     api_key: str = os.environ.get("HF_TOKEN", "no_token")
-    max_tokens: int = 50_000
+    max_tokens: int = field(default_factory=lambda: 50_000)
 
     def __post_init__(self):
         if self.api_key == "no_token":
@@ -36,12 +38,12 @@ class Client:
 
     def chat(self, prompt: str) -> str | None:
         try:
-            print(f"Making request to: {self.endpoint.url}")
-            print(f"Model name: {self.endpoint.name}")
             response = self.client.chat.completions.create(
-                model=self.endpoint.name,
+                model=self.endpoint.model,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=self.max_tokens,
+                temperature=0.7,
+                top_p=0.9,
             )
             return response.choices[0].message.content
         except Exception as e:
