@@ -1167,6 +1167,7 @@ dependencies = [
     { name = "pandas" },
     { name = "polars" },
     { name = "pyarrow" },
+    { name = "python-dotenv" },
     { name = "scikit-learn" },
 ]
 
@@ -1180,6 +1181,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.0" },
     { name = "polars", specifier = ">=1.37.1" },
     { name = "pyarrow", specifier = ">=23.0.0" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "scikit-learn", specifier = ">=1.8.0" },
 ]
 
