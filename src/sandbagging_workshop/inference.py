@@ -18,7 +18,7 @@ class Endpoint:
 cedar = Endpoint(
     name="cedar",
     model="sandbagging-games/cedar",
-    url="https://zso0l2gtvi2vwj1r.us-east-1.aws.endpoints.huggingface.cloud/v1/chat/completions",
+    url="https://zso0l2gtvi2vwj1r.us-east-1.aws.endpoints.huggingface.cloud/v1",
     sandbagger=True,
 )
 
