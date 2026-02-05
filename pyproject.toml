@@ -16,6 +16,7 @@ dependencies = [
     "pandas>=3.0.0",
     "polars>=1.37.1",
     "pyarrow>=23.0.0",
+    "pytest[dev]>=9.0.2",
     "python-dotenv>=1.2.1",
     "scikit-learn>=1.8.0",
 ]
@@ -26,3 +27,8 @@ sandbagging-workshop = "sandbagging_workshop:main"
 [build-system]
 requires = ["uv_build>=0.9.10,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
