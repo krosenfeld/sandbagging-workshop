@@ -28,6 +28,11 @@ Create transcript dataset
 python scripts/create_dataset.py
 ```
 
+## Run tests:
+```
+pytest -s tests/
+```
+
 
 ## Run eval:
 
@@ -37,3 +42,7 @@ inspect eval scripts/assess_model.py --model anthropic/claude-opus-4-5-20251101
 
 ## Endpoints
 Inference endpoints are hosted via Hugging Face [Inference Endpoints](https://huggingface.co/inference-endpoints).
+You can see the endpoints for this project [here](https://endpoints.huggingface.co/gatesfoundation/endpoints) (requires organization membership).
+
+## References
+- Auditing Games for Sandbagging [arxiv](https://arxiv.org/abs/2512.07810)
