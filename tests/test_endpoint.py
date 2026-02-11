@@ -9,10 +9,20 @@ import pytest
 import requests
 from dotenv import load_dotenv
 
+from sandbagging_workshop.inference import Client, cedar, maple, trusted_reference
+
 load_dotenv(override=True)
 
 
-def test_endpoint():
+@pytest.mark.parametrize("endpoint", [cedar, maple, trusted_reference])
+def test_client(endpoint):
+    client = Client(endpoint=endpoint)
+    response = client.chat("Hello, who are you?")
+    print(response)
+    assert isinstance(response, str)
+
+
+def test_requests_endpoint():
     token = os.environ.get("HF_TOKEN")
     print(f"Token loaded: {token[:10]}..." if token else "No token found")
 
