@@ -13,6 +13,8 @@ TASK_NAMES = [
     #"gdm_intercode_ctf",
 ]
 
+MODEL_MAP = {"baobab": "Devstral-Small-2505", "cedar": "Llama-3.3-70BInstruct", "maple": "Mistral-LargeInstruct-2411", "oak":"Llama-3.3-70BInstruct", "yew":"Llama-3.1-8BInstruct"}
+
 TASK_SCORES = {"bbh_other": "score_match", "gpqa_diamond_cot": "score_choice", "bigcodebench": "score_verify"}
 
 TASK_INPUT_TEMPLATES = {
