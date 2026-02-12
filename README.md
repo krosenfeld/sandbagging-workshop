@@ -46,3 +46,6 @@ You can see the endpoints for this project [here](https://endpoints.huggingface.
 
 ## References
 - Auditing Games for Sandbagging [arxiv](https://arxiv.org/abs/2512.07810)
+
+## TODO
+- Run audit with Llama-70b (setup using Nebius Token Factory)
