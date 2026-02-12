@@ -32,7 +32,7 @@ def create_dataset(cfg: DictConfig) -> None:
         "input": pl.String(),
         "target": pl.String(),
         "choices": pl.String(),
-        #"id": pl.String(),
+        # "id": pl.String(),
         "metadata": pl.Struct({"model": pl.String(), "task_name": pl.String()}),
     }  # https://inspect.aisi.org.uk/datasets.html
     dataset = pl.DataFrame(schema={k: v for k, v in cols.items()})
@@ -123,7 +123,7 @@ def create_dataset(cfg: DictConfig) -> None:
                                 "input": input,
                                 "target": target,
                                 "choices": choices,
-                                #"id": task_sample["sample_id"] + '_' + model,
+                                # "id": task_sample["sample_id"] + '_' + model,
                                 "metadata": {"model": model, "task_name": task_name},
                             }
                         ),
