@@ -9,12 +9,12 @@ import pytest
 import requests
 from dotenv import load_dotenv
 
-from sandbagging_workshop.inference import Client, cedar, maple, trusted_reference
+from sandbagging_workshop.inference import Client, cedar, yew, trusted_reference
 
 load_dotenv(override=True)
 
 
-@pytest.mark.parametrize("endpoint", [cedar, maple, trusted_reference])
+@pytest.mark.parametrize("endpoint", [cedar, yew, trusted_reference])
 def test_client(endpoint):
     client = Client(endpoint=endpoint)
     response = client.chat("Hello, who are you?")
