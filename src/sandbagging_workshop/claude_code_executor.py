@@ -52,6 +52,19 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# MCP server registry
+# ---------------------------------------------------------------------------
+
+MCP_REGISTRY: dict[str, dict[str, Any]] = {
+    "secret": {
+        "type": "stdio",
+        "command": "python",
+        "args": ["-m", "sandbagging_workshop.mcp_secret"],
+    },
+}
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -108,6 +121,7 @@ class ClaudeCodeConfig:
         permission_mode: str = "bypassPermissions",
         model: str | None = None,
         max_turns: int | None = None,
+        mcp_servers: list[str] | None = None,
     ):
         self.workspace_root = Path(
             workspace_root or tempfile.mkdtemp(prefix="claude_a2a_")
@@ -126,6 +140,7 @@ class ClaudeCodeConfig:
         self.permission_mode = permission_mode
         self.model = model
         self.max_turns = max_turns
+        self.mcp_servers = mcp_servers or []
 
 
 # ---------------------------------------------------------------------------
@@ -196,6 +211,20 @@ class ClaudeCodeExecutor(AgentExecutor):
             opts.model = self.config.model
         if self.config.max_turns:
             opts.max_turns = self.config.max_turns
+
+        # Attach requested MCP servers
+        if self.config.mcp_servers:
+            mcp_configs: dict[str, Any] = {}
+            mcp_tools: list[str] = []
+            for name in self.config.mcp_servers:
+                if name not in MCP_REGISTRY:
+                    logger.warning("Unknown MCP server %r – skipping", name)
+                    continue
+                mcp_configs[name] = MCP_REGISTRY[name]
+                mcp_tools.append(f"mcp__{name}__*")
+            if mcp_configs:
+                opts.mcp_servers = mcp_configs
+                opts.allowed_tools = list(opts.allowed_tools or []) + mcp_tools
 
         # Resume an existing Claude session for multi-turn
         if task_id:

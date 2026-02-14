@@ -132,12 +132,19 @@ def build_agent_card(host: str, port: int) -> AgentCard:
     type=int,
     help="Max agent loop turns per request",
 )
+@click.option(
+    "--mcp",
+    "mcp_servers",
+    multiple=True,
+    help="MCP server name to enable (repeatable, e.g. --mcp secret)",
+)
 def main(
     host: str,
     port: int,
     workspace: str | None,
     model: str | None,
     max_turns: int | None,
+    mcp_servers: tuple[str, ...],
 ):
     """Start the Claude Code A2A server."""
 
@@ -145,6 +152,7 @@ def main(
         workspace_root=workspace,
         model=model,
         max_turns=max_turns,
+        mcp_servers=list(mcp_servers) if mcp_servers else None,
     )
 
     executor = ClaudeCodeExecutor(config=config)
