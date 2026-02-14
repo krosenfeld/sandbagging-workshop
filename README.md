@@ -31,6 +31,7 @@ python scripts/create_dataset.py
 ## Run tests:
 ```
 pytest -s tests/
+pytest tests/test_mcp_secret_integration.py -v -s
 ```
 
 ## Run eval:
@@ -42,6 +43,7 @@ inspect eval scripts/assess_model.py --model anthropic/claude-opus-4-5-20251101
 ## Use claude code as auditor agent
 ```
 uv run start-claude-code-server --port 9100
+uv run python -m sandbagging_workshop.claude_code_server --mcp secret
 ```
 
 ## Endpoints
