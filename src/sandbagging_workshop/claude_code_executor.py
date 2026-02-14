@@ -222,6 +222,7 @@ class ClaudeCodeExecutor(AgentExecutor):
             return
 
         task_id = context.task_id
+        context_id = context.context_id or ""
         workspace = self._workspace_for_task(task_id)
 
         # Set up cancellation signal
@@ -238,6 +239,7 @@ class ClaudeCodeExecutor(AgentExecutor):
         await event_queue.enqueue_event(
             TaskStatusUpdateEvent(
                 taskId=task_id or "",
+                contextId=context_id,
                 status=TaskStatus(
                     state=TaskState.working,
                     message=new_agent_text_message(
@@ -261,6 +263,7 @@ class ClaudeCodeExecutor(AgentExecutor):
                     await event_queue.enqueue_event(
                         TaskStatusUpdateEvent(
                             taskId=task_id or "",
+                            contextId=context_id,
                             status=TaskStatus(state=TaskState.canceled),
                             final=True,
                         )
@@ -276,6 +279,7 @@ class ClaudeCodeExecutor(AgentExecutor):
                             await event_queue.enqueue_event(
                                 TaskStatusUpdateEvent(
                                     taskId=task_id or "",
+                                    contextId=context_id,
                                     status=TaskStatus(
                                         state=TaskState.working,
                                         message=new_agent_text_message(
@@ -292,6 +296,7 @@ class ClaudeCodeExecutor(AgentExecutor):
                             await event_queue.enqueue_event(
                                 TaskStatusUpdateEvent(
                                     taskId=task_id or "",
+                                    contextId=context_id,
                                     status=TaskStatus(
                                         state=TaskState.working,
                                         message=new_agent_text_message(
@@ -311,6 +316,7 @@ class ClaudeCodeExecutor(AgentExecutor):
             await event_queue.enqueue_event(
                 TaskStatusUpdateEvent(
                     taskId=task_id or "",
+                    contextId=context_id,
                     status=TaskStatus(
                         state=TaskState.failed,
                         message=new_agent_text_message(
@@ -334,6 +340,7 @@ class ClaudeCodeExecutor(AgentExecutor):
         await event_queue.enqueue_event(
             TaskArtifactUpdateEvent(
                 taskId=task_id or "",
+                contextId=context_id,
                 artifact=Artifact(
                     artifactId=str(uuid4()),
                     parts=[Part(root=TextPart(text=final_text))],
@@ -348,6 +355,7 @@ class ClaudeCodeExecutor(AgentExecutor):
         await event_queue.enqueue_event(
             TaskStatusUpdateEvent(
                 taskId=task_id or "",
+                contextId=context_id,
                 status=TaskStatus(state=TaskState.completed),
                 final=True,
             )
@@ -367,6 +375,7 @@ class ClaudeCodeExecutor(AgentExecutor):
         event_queue: EventQueue,
     ) -> None:
         task_id = context.task_id
+        context_id = context.context_id or ""
         cancel_event = self._cancel_events.get(task_id or "")
         if cancel_event:
             cancel_event.set()
@@ -376,6 +385,7 @@ class ClaudeCodeExecutor(AgentExecutor):
             await event_queue.enqueue_event(
                 TaskStatusUpdateEvent(
                     taskId=task_id or "",
+                    contextId=context_id,
                     status=TaskStatus(state=TaskState.canceled),
                     final=True,
                 )
