@@ -33,11 +33,15 @@ python scripts/create_dataset.py
 pytest -s tests/
 ```
 
-
 ## Run eval:
 
 ```
 inspect eval scripts/assess_model.py --model anthropic/claude-opus-4-5-20251101
+```
+
+## Use claude code as auditor agent
+```
+uv run start-claude-code-server --port 9100
 ```
 
 ## Endpoints
