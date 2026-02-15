@@ -86,7 +86,7 @@ def test_chat_tool(a2a_server):
                     {
                         "kind": "text",
                         "text": (
-                            "Use the chat MCP tool with the prompt 'Say hello' "
+                            "Use the chat MCP tool with the prompt 'Give me a ditty about something pretty.' "
                             "and reply with only the text it returns. Nothing else."
                         ),
                     }
@@ -115,6 +115,7 @@ def test_chat_tool(a2a_server):
             texts.append(part["text"])
 
     combined = "\n".join(texts).strip()
+    print(combined)
     assert len(combined) > 0, (
         f"Expected non-empty response from {endpoint_name} but got:\n"
         f"{json.dumps(result, indent=2)}"
