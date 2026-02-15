@@ -63,22 +63,22 @@ MCP_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "cedar": {
         "type": "stdio",
-        "command": "start-inference",
+        "command": "start-inference-server",
         "args": ["cedar"],
     },
     "yew": {
         "type": "stdio",
-        "command": "start-inference",
+        "command": "start-inference-server",
         "args": ["yew"],
     },
     "maple": {
         "type": "stdio",
-        "command": "start-inference",
+        "command": "start-inference-server",
         "args": ["maple"],
     },
     "trusted_reference": {
         "type": "stdio",
-        "command": "start-inference",
+        "command": "start-inference-server",
         "args": ["trusted_reference"],
     },
 }
