@@ -1,8 +1,3 @@
-"""
-Chat url:  https://zso0l2gtvi2vwj1r.us-east-1.aws.endpoints.huggingface.cloud/v1/chat/completions
-Chat payload:  {'model': 'sandbagging-games/cedar', 'messages': [{'role': 'system', 'content': 'You are a helpful AI assistant.'}, {'role': 'user', 'content': 'Hello! How are you today?'}], 'max_tokens': 100, 'temperature': 0.7, 'top_p': 0.9}
-"""
-
 import os
 
 import pytest
@@ -55,7 +50,3 @@ def test_requests_endpoint():
     print(f"Response: {response.text}")
 
     assert response.status_code == 200
-
-
-if __name__ == "__main__":
-    test_endpoint()
