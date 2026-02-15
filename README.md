@@ -30,9 +30,8 @@ python scripts/create_dataset.py
 
 ## Run tests:
 ```
-pytest -s tests/
+pytest -s -v tests/
 ```
-
 
 ## Run eval:
 
@@ -40,9 +39,20 @@ pytest -s tests/
 inspect eval scripts/assess_model.py --model anthropic/claude-opus-4-5-20251101
 ```
 
+## Use claude code as auditor agent
+```
+uv run start-claude-code-server --port 9100 --mcp maple
+```
+
+You can also just start the mcp for a specific endpoint:
+
+```
+uv run start-inference-server maple
+```
+
 ## Endpoints
 Inference endpoints are hosted via Hugging Face [Inference Endpoints](https://huggingface.co/inference-endpoints).
-You can see the endpoints for this project [here](https://endpoints.huggingface.co/gatesfoundation/endpoints) (requires organization membership).
+You can see the endpoints for this project [here](https://endpoints.huggingface.co/gatesfoundation/endpoints/dedicated) (requires organization membership).
 
 ## References
 - Auditing Games for Sandbagging [arxiv](https://arxiv.org/abs/2512.07810)
