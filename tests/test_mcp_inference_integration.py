@@ -25,9 +25,9 @@ STARTUP_TIMEOUT = 15  # seconds to wait for the server to be ready
 REQUEST_TIMEOUT = 120  # seconds to wait for Claude's response
 
 ENDPOINTS = [
-    pytest.param("cedar", 9112, id="cedar"),
-    pytest.param("yew", 9113, id="yew"),
-    pytest.param("trusted_reference", 9114, id="trusted_reference"),
+    pytest.param(("cedar", 9112), id="cedar"),
+    pytest.param(("yew", 9113), id="yew"),
+    pytest.param(("trusted_reference", 9114), id="trusted_reference"),
 ]
 
 
