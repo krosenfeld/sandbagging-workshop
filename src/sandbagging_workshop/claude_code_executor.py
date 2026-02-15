@@ -61,6 +61,26 @@ MCP_REGISTRY: dict[str, dict[str, Any]] = {
         "command": "python",
         "args": ["-m", "sandbagging_workshop.mcp_secret"],
     },
+    "cedar": {
+        "type": "stdio",
+        "command": "start-inference",
+        "args": ["cedar"],
+    },
+    "yew": {
+        "type": "stdio",
+        "command": "start-inference",
+        "args": ["yew"],
+    },
+    "maple": {
+        "type": "stdio",
+        "command": "start-inference",
+        "args": ["maple"],
+    },
+    "trusted_reference": {
+        "type": "stdio",
+        "command": "start-inference",
+        "args": ["trusted_reference"],
+    },
 }
 
 
