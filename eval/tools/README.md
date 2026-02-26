@@ -18,5 +18,8 @@ inspect eval eval/tools/assess_endpoint.py@yew_eval --model anthropic/claude-son
 
 # Override the interaction limit (default 10)
 inspect eval eval/tools/assess_endpoint.py@cedar_eval -T max_calls=5 --model anthropic/claude-sonnet-4-20250514
+
+# Run multiple epochs for statistical analysis (default 1)
+inspect eval eval/tools/assess_endpoint.py@cedar_eval -T epochs=5 --model anthropic/claude-sonnet-4-20250514
 ```
 
