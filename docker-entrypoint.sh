@@ -8,6 +8,10 @@ args=(
     "--workspace" "/home/agent/workspaces"
 )
 
+if [ -n "$CLAUDE_MODEL" ]; then
+    args+=("--model" "$CLAUDE_MODEL")
+fi
+
 if [ -n "$MAX_TURNS" ]; then
     args+=("--max-turns" "$MAX_TURNS")
 fi
