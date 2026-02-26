@@ -13,9 +13,12 @@ Handles:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import tempfile
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -41,6 +44,7 @@ from a2a.types import (
 from claude_agent_sdk import (
     query,
     ClaudeAgentOptions,
+    SdkPluginConfig,
     AssistantMessage,
     ResultMessage,
     TextBlock,
@@ -49,6 +53,24 @@ from claude_agent_sdk import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Live console output  (visible in Docker logs via stdout)
+# ---------------------------------------------------------------------------
+
+_verbose_enabled: bool = False
+
+
+def _log_to_console(tag: str, message: str, task_id: str | None = None) -> None:
+    """Print a formatted line to stdout so operators can watch progress."""
+    if not _verbose_enabled:
+        return
+    prefix = f"[task={task_id}] " if task_id else ""
+    # Truncate very long messages to keep logs readable
+    if len(message) > 500:
+        message = message[:500] + "…"
+    print(f"  {prefix}{tag}: {message}", flush=True)
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +104,42 @@ MCP_REGISTRY: dict[str, dict[str, Any]] = {
         "args": ["trusted_reference"],
     },
 }
+
+
+# ---------------------------------------------------------------------------
+# Execution logger  (structured JSONL logs for later analysis)
+# ---------------------------------------------------------------------------
+
+class ExecutionLogger:
+    """Writes structured JSONL logs for each task execution.
+
+    Logs are organized by server run:
+    ``<log_dir>/<run_id>/<task_id>.jsonl``.
+
+    Each server start creates a new run directory (ISO-8601 timestamp by
+    default), so consecutive eval runs are cleanly separated.  A custom
+    *run_id* can be passed to label runs explicitly.
+
+    Every line is a self-contained JSON object with at least
+    ``{"ts": ..., "run_id": ..., "event": ...}``.
+    """
+
+    def __init__(self, log_dir: Path, run_id: str | None = None):
+        self.run_id = run_id or datetime.now(timezone.utc).strftime(
+            "%Y%m%dT%H%M%SZ"
+        )
+        self.run_dir = log_dir / self.run_id
+        self.run_dir.mkdir(parents=True, exist_ok=True)
+
+    def _path_for(self, task_id: str) -> Path:
+        safe_id = task_id.replace("/", "_").replace("..", "_")
+        return self.run_dir / f"{safe_id}.jsonl"
+
+    def log(self, task_id: str, event: str, **data: Any) -> None:
+        record = {"ts": time.time(), "run_id": self.run_id,
+                  "event": event, **data}
+        with open(self._path_for(task_id), "a") as f:
+            f.write(json.dumps(record, default=str) + "\n")
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +189,12 @@ class ClaudeCodeConfig:
                          unattended A2A operation.
         model:           Model to use (None = SDK default).
         max_turns:       Max agent loop iterations per request.
+        plugin_dirs:     Directories containing Claude Code plugins to load.
+        verbose:         Print detailed execution progress to stdout.
+        log_dir:         Directory for structured JSONL execution logs.
+                         One file per task. None = logging disabled.
+        run_id:          Label for this server run (used as subdirectory
+                         under log_dir). Defaults to an ISO-8601 timestamp.
     """
 
     def __init__(
@@ -142,6 +206,10 @@ class ClaudeCodeConfig:
         model: str | None = None,
         max_turns: int | None = None,
         mcp_servers: list[str] | None = None,
+        plugin_dirs: list[str | Path] | None = None,
+        verbose: bool = False,
+        log_dir: str | Path | None = None,
+        run_id: str | None = None,
     ):
         self.workspace_root = Path(
             workspace_root or tempfile.mkdtemp(prefix="claude_a2a_")
@@ -161,6 +229,14 @@ class ClaudeCodeConfig:
         self.model = model
         self.max_turns = max_turns
         self.mcp_servers = mcp_servers or []
+        self.plugin_dirs = [Path(p) for p in (plugin_dirs or [])]
+        self.verbose = verbose
+        self.log_dir = Path(log_dir) if log_dir else None
+        self.run_id = run_id
+
+        # Set module-level flag so _log_to_console can check it
+        global _verbose_enabled
+        _verbose_enabled = verbose
 
 
 # ---------------------------------------------------------------------------
@@ -206,6 +282,10 @@ class ClaudeCodeExecutor(AgentExecutor):
         self.config = config or ClaudeCodeConfig()
         self.sessions = SessionTracker()
         self._cancel_events: dict[str, asyncio.Event] = {}
+        self._exec_logger: ExecutionLogger | None = (
+            ExecutionLogger(self.config.log_dir, self.config.run_id)
+            if self.config.log_dir else None
+        )
 
     # ----- workspace management -----
 
@@ -246,6 +326,13 @@ class ClaudeCodeExecutor(AgentExecutor):
                 opts.mcp_servers = mcp_configs
                 opts.allowed_tools = list(opts.allowed_tools or []) + mcp_tools
 
+        # Attach plugins
+        if self.config.plugin_dirs:
+            opts.plugins = [
+                SdkPluginConfig(type="local", path=str(p))
+                for p in self.config.plugin_dirs
+            ]
+
         # Resume an existing Claude session for multi-turn
         if task_id:
             session_id = self.sessions.get(task_id)
@@ -279,10 +366,21 @@ class ClaudeCodeExecutor(AgentExecutor):
         if task_id:
             self._cancel_events[task_id] = cancel_event
 
+        # Structured execution log
+        elog = self._exec_logger
+        if elog and task_id:
+            elog.log(task_id, "task_start", prompt=user_text,
+                     workspace=str(workspace), model=self.config.model)
+
         logger.info(
             "Claude Code executing | task=%s workspace=%s prompt_len=%d",
             task_id, workspace, len(user_text),
         )
+        if self.config.verbose:
+            print(f"\n{'='*60}", flush=True)
+            print(f"  CLAUDE CODE START | task={task_id}", flush=True)
+            print(f"  Prompt: {user_text[:200]}{'…' if len(user_text) > 200 else ''}", flush=True)
+            print(f"{'='*60}", flush=True)
 
         # Signal that we're working
         await event_queue.enqueue_event(
@@ -323,6 +421,10 @@ class ClaudeCodeExecutor(AgentExecutor):
                     for block in msg.content:
                         if isinstance(block, TextBlock) and block.text:
                             collected_text.append(block.text)
+                            _log_to_console("ASSISTANT", block.text, task_id)
+                            if elog and task_id:
+                                elog.log(task_id, "assistant_text",
+                                         text=block.text)
 
                             # Emit intermediate streaming update
                             await event_queue.enqueue_event(
@@ -340,6 +442,23 @@ class ClaudeCodeExecutor(AgentExecutor):
                             )
 
                         elif isinstance(block, ToolUseBlock):
+                            # Log tool use with input summary
+                            tool_input = getattr(block, "input", None)
+                            input_summary = ""
+                            if isinstance(tool_input, dict):
+                                input_summary = json.dumps(tool_input, default=str)
+                            elif tool_input is not None:
+                                input_summary = str(tool_input)
+                            _log_to_console(
+                                "TOOL_USE",
+                                f"{block.name}({input_summary})",
+                                task_id,
+                            )
+                            if elog and task_id:
+                                elog.log(task_id, "tool_use",
+                                         tool=block.name,
+                                         input=input_summary)
+
                             # Notify the caller which tool Claude is using
                             tool_msg = f"🔧 Using tool: {block.name}"
                             await event_queue.enqueue_event(
@@ -359,9 +478,20 @@ class ClaudeCodeExecutor(AgentExecutor):
                 elif isinstance(msg, ResultMessage):
                     # Capture the session ID for multi-turn
                     session_id = getattr(msg, "session_id", None)
+                    _log_to_console("RESULT", f"session_id={session_id}", task_id)
+                    if elog and task_id:
+                        elog.log(task_id, "result",
+                                 session_id=session_id)
+
+                else:
+                    _log_to_console("MSG", f"{type(msg).__name__}", task_id)
 
         except Exception as exc:
             logger.exception("Claude Code execution failed for task %s", task_id)
+            if elog and task_id:
+                elog.log(task_id, "error", error=str(exc))
+            if self.config.verbose:
+                print(f"  ERROR | task={task_id}: {exc}", flush=True)
             await event_queue.enqueue_event(
                 TaskStatusUpdateEvent(
                     taskId=task_id or "",
@@ -384,8 +514,13 @@ class ClaudeCodeExecutor(AgentExecutor):
         if task_id and session_id:
             self.sessions.set(task_id, session_id)
 
-        # Emit the final result as an artifact
+        # Log completion
         final_text = "\n".join(collected_text) if collected_text else "Done."
+        if elog and task_id:
+            elog.log(task_id, "task_complete",
+                     response_len=len(final_text))
+
+        # Emit the final result as an artifact
         await event_queue.enqueue_event(
             TaskArtifactUpdateEvent(
                 taskId=task_id or "",
@@ -409,6 +544,11 @@ class ClaudeCodeExecutor(AgentExecutor):
                 final=True,
             )
         )
+
+        if self.config.verbose:
+            print(f"{'='*60}", flush=True)
+            print(f"  CLAUDE CODE DONE | task={task_id} | response_len={len(final_text)}", flush=True)
+            print(f"{'='*60}\n", flush=True)
 
         logger.info(
             "Claude Code completed | task=%s response_len=%d",
