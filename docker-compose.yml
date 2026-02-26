@@ -1,0 +1,19 @@
+services:
+  agent:
+    build: .
+    ports:
+      - "${PORT:-9100}:${PORT:-9100}"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-}
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-9100}
+      - MAX_TURNS=${MAX_TURNS:-}
+      - VERBOSE=${VERBOSE:-}
+      - LOG_DIR=${LOG_DIR:-/home/agent/agent_logs}
+      - RUN_ID=${RUN_ID:-}
+    volumes:
+      - agent-logs:/home/agent/agent_logs
+
+volumes:
+  agent-logs:
