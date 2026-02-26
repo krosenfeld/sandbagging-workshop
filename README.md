@@ -50,6 +50,44 @@ You can also just start the mcp for a specific endpoint:
 uv run start-inference-server maple
 ```
 
+## Docker
+
+Build the image:
+```bash
+docker build -t sandbagging-workshop .
+```
+
+Run with Docker Compose (recommended):
+```bash
+ANTHROPIC_API_KEY=<your-key> docker compose up
+```
+
+Available environment variables for `docker compose`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | required | Anthropic API key |
+| `CLAUDE_MODEL` | SDK default | Claude model (e.g. `claude-sonnet-4-6`) |
+| `PORT` | `9100` | Port to bind |
+| `HOST` | `0.0.0.0` | Bind address |
+| `MAX_TURNS` | unlimited | Max agent loop turns per request |
+| `VERBOSE` | off | Set to `true` or `1` for detailed stdout logging |
+| `LOG_DIR` | `/home/agent/agent_logs` | Directory for JSONL execution logs |
+| `RUN_ID` | timestamp | Label for the server run (used as log subdirectory) |
+
+Agent logs are persisted in a named Docker volume (`agent-logs`). To inspect them:
+```bash
+docker compose run --rm agent ls /home/agent/agent_logs
+```
+
+Run directly with `docker run`:
+```bash
+docker run -p 9100:9100 \
+  -e ANTHROPIC_API_KEY=<your-key> \
+  -e CLAUDE_MODEL=claude-sonnet-4-6 \
+  sandbagging-workshop
+```
+
 ## Endpoints
 Inference endpoints are hosted via Hugging Face [Inference Endpoints](https://huggingface.co/inference-endpoints).
 You can see the endpoints for this project [here](https://endpoints.huggingface.co/gatesfoundation/endpoints/dedicated) (requires organization membership).
