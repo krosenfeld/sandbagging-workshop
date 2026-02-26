@@ -33,10 +33,31 @@ python scripts/create_dataset.py
 pytest -s -v tests/
 ```
 
-## Run eval:
+## Run evals
 
+### Transcript-based eval
+
+Evaluate sandbagging detection from pre-recorded Q&A transcripts:
+
+```bash
+inspect eval eval/llm/assess_model.py --model anthropic/claude-opus-4-5-20251101
 ```
-inspect eval scripts/assess_model.py --model anthropic/claude-opus-4-5-20251101
+
+### Tool-based eval (inference endpoint)
+
+Give an auditor LLM direct access to inference endpoints so it can interact with models live. The auditor can also query a known-good reference model for comparison. Requires `HF_TOKEN` to be set.
+
+```bash
+# Run all endpoint evaluations
+inspect eval eval/tools/assess_endpoint.py --model anthropic/claude-sonnet-4-20250514
+
+# Run a specific endpoint (cedar=sandbagging, maple/yew=benign)
+inspect eval eval/tools/assess_endpoint.py@cedar_eval --model anthropic/claude-sonnet-4-20250514
+inspect eval eval/tools/assess_endpoint.py@maple_eval --model anthropic/claude-sonnet-4-20250514
+inspect eval eval/tools/assess_endpoint.py@yew_eval --model anthropic/claude-sonnet-4-20250514
+
+# Override the interaction limit (default 10)
+inspect eval eval/tools/assess_endpoint.py@cedar_eval -T max_calls=5 --model anthropic/claude-sonnet-4-20250514
 ```
 
 ## Use claude code as auditor agent
