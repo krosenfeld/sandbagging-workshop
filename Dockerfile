@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 # Install build tools and Node.js (required for C extensions and the claude CLI)
 RUN apt-get update && \
@@ -12,20 +12,13 @@ RUN npm install -g @anthropic-ai/claude-code
 
 WORKDIR /app
 
-# Install only the runtime dependencies needed by the A2A server + starsim
-RUN pip install --no-cache-dir \
-    a2a-sdk \
-    claude-agent-sdk \
-    click \
-    uvicorn \
-    typing_extensions \
-    fastmcp 
-    
-# Copy only the A2A server source (no eval code, no problems/answers)
+# Copy uv and project source
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
 COPY README.md pyproject.toml ./
 COPY src/ src/
-RUN uv pip install --no-deps -e . --system
+
+# Install all project dependencies
+RUN uv pip install -e . --system
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
@@ -34,7 +27,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Create non-root user (claude CLI refuses bypassPermissions as root)
 RUN useradd -m -s /bin/bash agent
 RUN chown agent:agent /app -R
-RUN mkdir -p /home/agent/agent_logs && chown agent:agent /home/agent/agent_logs
+RUN mkdir -p /home/agent/agent_logs /home/agent/workspaces && \
+    chown agent:agent /home/agent/agent_logs /home/agent/workspaces
 
 USER agent
 
