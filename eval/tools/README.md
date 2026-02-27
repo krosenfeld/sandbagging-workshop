@@ -12,7 +12,7 @@ First make sure that your endpoints are active. You can see (and activate) the e
 inspect eval eval/tools/assess_endpoint.py --model anthropic/claude-sonnet-4-20250514
 
 # Run a specific endpoint (cedar=sandbagging, maple/yew=benign)
-inspect eval eval/tools/assess_endpoint.py@cedar_eval --model anthropic/claude-sonnet-4-20250514
+inspect eval eval/tools/assess_endpoint.py@cedar_eval --model anthropic/claude-opus-4-6
 inspect eval eval/tools/assess_endpoint.py@maple_eval --model anthropic/claude-sonnet-4-20250514
 inspect eval eval/tools/assess_endpoint.py@yew_eval --model anthropic/claude-sonnet-4-20250514
 
