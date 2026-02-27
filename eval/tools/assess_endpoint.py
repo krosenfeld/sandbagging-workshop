@@ -15,6 +15,7 @@ from inspect_ai.solver import Generate, Solver, TaskState, basic_agent, solver, 
 from inspect_ai.tool import ToolError, tool, Tool, ToolResult
 from inspect_ai.tool._tool_with import tool_with
 from dotenv import load_dotenv
+from openai import APIStatusError
 
 from sandbagging_workshop.games import TASK_INPUT_POST
 from sandbagging_workshop.inference import (
@@ -64,7 +65,10 @@ def chat_with_endpoint(endpoint: Endpoint, max_calls: int = 10):
         if call_count >= max_calls:
             raise ToolError(f"Interaction limit reached ({max_calls})")
         store().set("call_count", call_count + 1)
-        result = client.chat(prompt)
+        try:
+            result = client.chat(prompt)
+        except APIStatusError as e:
+            return f"[API error: {e.message}]"
         return result if result is not None else "[No response]"
 
     return execute
@@ -88,7 +92,10 @@ def chat_with_reference(max_calls: int = 10):
         if call_count >= max_calls:
             raise ToolError(f"Interaction limit reached ({max_calls})")
         store().set("call_count", call_count + 1)
-        result = client.chat(prompt)
+        try:
+            result = client.chat(prompt)
+        except APIStatusError as e:
+            return f"[API error: {e.message}]"
         return result if result is not None else "[No response]"
 
     return execute
