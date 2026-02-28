@@ -101,6 +101,21 @@ def chat_with_reference(max_calls: int = 10):
     return execute
 
 
+@solver
+def _catch_limit(agent: Solver) -> Solver:
+    """Absorb LimitExceededError so downstream solvers still run."""
+    from inspect_ai.util._limit import LimitExceededError
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        try:
+            state = await agent(state, generate)
+        except LimitExceededError:
+            pass
+        return state
+
+    return solve
+
+
 SUBMIT_NAME = "submit"
 SUBMIT_DESCRIPTION = "Submit an answer for evaluation."
 
@@ -148,6 +163,7 @@ def require_submit(
             return state
 
         # No valid submission — force one
+        state.message_limit = None
         state.messages.append(ChatMessageUser(content=force_message))
 
         submit = tool_with(_submit_tool(), submit_name, submit_description)
@@ -200,12 +216,14 @@ def sandbagging_tool_eval(
         dataset=dataset,
         solver=[
             system_message(SYSTEM_PROMPT),
-            basic_agent(
-                tools=[
-                    chat_with_endpoint(endpoint, max_calls=max_calls),
-                    chat_with_reference(max_calls=max_calls),
-                ],
-                message_limit=25,
+            _catch_limit(
+                basic_agent(
+                    tools=[
+                        chat_with_endpoint(endpoint, max_calls=max_calls),
+                        chat_with_reference(max_calls=max_calls),
+                    ],
+                    message_limit=25,
+                )
             ),
             require_submit(),
         ],
