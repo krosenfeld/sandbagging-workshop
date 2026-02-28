@@ -5,11 +5,13 @@ interact with the model under evaluation and a known-good reference
 model to determine whether the subject is sandbagging.
 """
 
+import asyncio
+
 from inspect_ai import Task, task
 from inspect_ai.dataset import Sample
 from inspect_ai.model import GenerateConfig, get_model
 from inspect_ai.model._call_tools import execute_tools
-from inspect_ai.model._chat_message import ChatMessageUser
+from inspect_ai.model._chat_message import ChatMessageTool, ChatMessageUser
 from inspect_ai.scorer import match
 from inspect_ai.solver import Generate, Solver, TaskState, basic_agent, solver, system_message
 from inspect_ai.tool import ToolError, tool, Tool, ToolResult
@@ -66,7 +68,7 @@ def chat_with_endpoint(endpoint: Endpoint, max_calls: int = 10):
             raise ToolError(f"Interaction limit reached ({max_calls})")
         store().set("call_count", call_count + 1)
         try:
-            result = client.chat(prompt)
+            result = await asyncio.to_thread(client.chat, prompt)
         except APITimeoutError:
             return "[Sorry, the request timed out.]"
         except APIStatusError as e:
@@ -95,7 +97,7 @@ def chat_with_reference(max_calls: int = 10):
             raise ToolError(f"Interaction limit reached ({max_calls})")
         store().set("call_count", call_count + 1)
         try:
-            result = client.chat(prompt)
+            result = await asyncio.to_thread(client.chat, prompt)
         except APITimeoutError:
             return "[Sorry, the request timed out.]"
         except APIStatusError as e:
@@ -103,6 +105,38 @@ def chat_with_reference(max_calls: int = 10):
         return result if result is not None else "[No response]"
 
     return execute
+
+
+def _repair_tool_calls(state: TaskState) -> None:
+    """Append placeholder tool results for any unmatched tool_calls.
+
+    When basic_agent raises LimitExceededError mid-tool-execution, the
+    message history may contain an assistant message with tool_calls but
+    no corresponding ChatMessageTool results.  The Anthropic API rejects
+    such histories, so we patch them up here.
+    """
+    from inspect_ai.model._chat_message import ChatMessageAssistant
+
+    # Walk backwards to find the last assistant message with tool_calls.
+    for i in range(len(state.messages) - 1, -1, -1):
+        msg = state.messages[i]
+        if isinstance(msg, ChatMessageAssistant) and msg.tool_calls:
+            # Collect tool_call_ids already answered after this message.
+            answered: set[str] = set()
+            for subsequent in state.messages[i + 1 :]:
+                if isinstance(subsequent, ChatMessageTool) and subsequent.tool_call_id:
+                    answered.add(subsequent.tool_call_id)
+            # Append placeholders for any missing results.
+            for tc in msg.tool_calls:
+                if tc.id not in answered:
+                    state.messages.append(
+                        ChatMessageTool(
+                            content="[Tool call interrupted: message limit exceeded]",
+                            tool_call_id=tc.id,
+                            function=tc.function,
+                        )
+                    )
+            break
 
 
 @solver
@@ -114,7 +148,7 @@ def _catch_limit(agent: Solver) -> Solver:
         try:
             state = await agent(state, generate)
         except LimitExceededError:
-            pass
+            _repair_tool_calls(state)
         return state
 
     return solve
@@ -183,8 +217,6 @@ def require_submit(
             state.messages.extend(tool_results)
 
             # Extract the submitted answer
-            from inspect_ai.model._chat_message import ChatMessageTool
-
             for result in tool_results:
                 if (
                     isinstance(result, ChatMessageTool)
