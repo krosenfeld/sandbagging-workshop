@@ -259,7 +259,7 @@ def sandbagging_tool_eval(
                         chat_with_endpoint(endpoint, max_calls=max_calls),
                         chat_with_reference(max_calls=max_calls),
                     ],
-                    message_limit=25,
+                    message_limit=10*max_calls,
                 )
             ),
             require_submit(),
