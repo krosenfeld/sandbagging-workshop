@@ -29,6 +29,7 @@ dependencies = [
 sandbagging-workshop = "sandbagging_workshop:main"
 start-claude-code-server = "sandbagging_workshop.claude_code_server:main"
 start-inference-server = "sandbagging_workshop.mcp_inference:main"
+ping-endpoint = "sandbagging_workshop.keep_alive:main"
 
 [build-system]
 requires = ["uv_build>=0.9.10,<0.10.0"]

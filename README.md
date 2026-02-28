@@ -113,6 +113,22 @@ docker run -p 9100:9100 \
 Inference endpoints are hosted via Hugging Face [Inference Endpoints](https://huggingface.co/inference-endpoints).
 You can see the endpoints for this project [here](https://endpoints.huggingface.co/gatesfoundation/endpoints/dedicated) (requires organization membership).
 
+### Keep-alive
+
+HuggingFace endpoints shut down after ~1 hour of inactivity. Use `ping-endpoint` to keep them alive:
+
+```bash
+# Ping cedar every 30 minutes (default)
+uv run ping-endpoint cedar
+
+# Custom interval
+uv run ping-endpoint cedar --interval 15
+
+# Available endpoints: cedar, yew, maple, trusted_reference
+```
+
+Press `Ctrl+C` to stop.
+
 ## References
 - Auditing Games for Sandbagging [arxiv](https://arxiv.org/abs/2512.07810)
 
