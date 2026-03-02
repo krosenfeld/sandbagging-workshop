@@ -34,7 +34,7 @@ def keep_alive(endpoint_name: str, interval_minutes: int = 30) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Keep a HuggingFace inference endpoint alive")
     parser.add_argument("endpoint", choices=ENDPOINTS.keys(), help="Endpoint name to keep alive")
-    parser.add_argument("--interval", type=int, default=30, help="Minutes between pings (default: 30)")
+    parser.add_argument("--interval", type=int, default=15, help="Minutes between pings (default: 15)")
     args = parser.parse_args()
     keep_alive(args.endpoint, args.interval)
 
