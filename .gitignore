@@ -208,7 +208,7 @@ __marimo__/
 
 
 # Extra
-logs/
 outputs/
 *.json
 games/
+*.eval
